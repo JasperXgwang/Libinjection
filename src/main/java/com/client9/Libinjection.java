@@ -1,8 +1,5 @@
 package com.client9;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 
 public class Libinjection {
@@ -49,7 +46,7 @@ public class Libinjection {
     public static final char CHAR_DOUBLE = '"';
     public static final char CHAR_TICK = '`';
 
-    private Keyword keywords = new Keyword(getKeywordsPath());  /* keyword hashmap */
+    private Keyword keywords = new Keyword(getKeywordsPath("Keywords.txt"));  /* keyword hashmap */
     private State state;
     private String output;
 
@@ -61,8 +58,8 @@ public class Libinjection {
         return output;
     }
 
-    public String getKeywordsPath() {
-        String filePath = this.getClass().getClassLoader().getResource("Keywords.txt").getPath();
+    public String getKeywordsPath(String fileName) {
+        String filePath = this.getClass().getClassLoader().getResource(fileName).getPath();
         if (!new File(filePath).exists()) {
             throw new RuntimeException("keywords is not found");
         }

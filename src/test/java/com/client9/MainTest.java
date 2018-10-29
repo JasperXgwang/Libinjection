@@ -5,6 +5,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+
 public class MainTest {
 
     private static final Logger logger = LoggerFactory.getLogger(MainTest.class);
@@ -34,7 +36,7 @@ public class MainTest {
     public void testFile() {
         /* test a file and output its results, with options to urldecode and time */
         TestFile t = new TestFile();
-        t.testfile("/data/sqli.txt", "/data/sqli.txt.output", true, false);
+        t.testfile(getFilePath("/data/sqli.txt"), getFilePath("/data/sqli.txt.output"), true, false);
     }
 
     /**
@@ -74,6 +76,14 @@ public class MainTest {
         double total = (end - start) / 1000.0;
         double tps = 1000000.0 / total;
         logger.info("iterations:{} total time:{} sec  tps:{}", 10000000, total, (int) tps);
+    }
+
+    private String getFilePath(String fileName) {
+        String filePath = this.getClass().getResource(fileName).getPath();
+        if (!new File(filePath).exists()) {
+            throw new RuntimeException("file is not found");
+        }
+        return filePath;
     }
 
 }
