@@ -58,24 +58,21 @@ public class MainTest {
         /* print output for above inputs */
         for (int i = 0; i < test.length; i++) {
             libinjection.libinjection_sqli(test[i]);
-            logger.info(libinjection.getOutput());
+            logger.info(test[i] + "---->" + libinjection.getOutput());
         }
 
         /* let jvm optimize for 100000 iterations */
-        for (int c = 0; c < 100000; c++) {
-            libinjection.libinjection_sqli(test[c % 8]);
-        }
-
+        int iterations = 1000000;
         /* time */
         double start = System.currentTimeMillis();
-        for (int c = 0; c < 1000000; c++) {
+        for (int c = 0; c < iterations; c++) {
             libinjection.libinjection_sqli(test[c % 8]);
         }
         double end = System.currentTimeMillis();
 
         double total = (end - start) / 1000.0;
-        double tps = 1000000.0 / total;
-        logger.info("iterations:{} total time:{} sec  tps:{}", 10000000, total, (int) tps);
+        double tps = iterations / total;
+        logger.info("iterations:{} total time:{} sec  tps:{}", iterations, total, (int) tps);
     }
 
     private String getFilePath(String fileName) {
