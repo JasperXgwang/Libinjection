@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainTest {
 
@@ -21,15 +23,20 @@ public class MainTest {
     @Test
     public void testStr() {
         /* test a string */
-        String input = "admin' OR 1=1--";
-        input = "admin=1";
-        input = "-1' and 1=1 union/* foo */select load_file('/etc/passwd')--";
-        input = "'and 1=1"; //s&1
-        input = "' UNION ALL SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL--";
+        List<String> list = new ArrayList<String>();
+        list.add("admin=1");
+        list.add("admin' OR 1=1--");
+        list.add("-1' and 1=1 union/* foo */select load_file('/etc/passwd')--");
+        list.add("'and 1=1");
+        list.add("' UNION ALL SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL--");
+        list.add("*/UNION SELECT password FROM users--");
+        list.add("?id=sleep(9999)");
+        list.add("http://testphp.vulnweb.com/main.php?SmallClass=' union select * from news where 1=2 and ''='");
 
-        boolean issqli = libinjection.libinjection_sqli(input);
-
-        logger.info(libinjection.getOutput());
+        for (String input : list) {
+            libinjection.libinjection_sqli(input);
+            logger.info(libinjection.getOutput() + ">>>>>>" + input);
+        }
     }
 
     @Test
