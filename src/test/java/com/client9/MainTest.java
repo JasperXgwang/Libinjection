@@ -8,6 +8,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class MainTest {
 
@@ -21,7 +26,7 @@ public class MainTest {
     }
 
     @Test
-    public void testStr() {
+    public void testStr() throws ExecutionException, InterruptedException {
         /* test a string */
         List<String> list = new ArrayList<String>();
         list.add("admin=1");
@@ -33,10 +38,25 @@ public class MainTest {
         list.add("?id=sleep(9999)");
         list.add("http://testphp.vulnweb.com/main.php?SmallClass=' union select * from news where 1=2 and ''='");
 
-        for (String input : list) {
-            libinjection.libinjection_sqli(input);
-            logger.info(libinjection.getOutput() + ">>>>>>" + input);
+        ExecutorService executors = Executors.newCachedThreadPool();
+        List<Future<String>> futures = new ArrayList<Future<String>>(list.size());
+        for (final String input : list) {
+            Future future = executors.submit(new Callable() {
+
+                @Override
+                public Object call() throws Exception {
+                    libinjection.libinjection_sqli(input);
+                    logger.info(libinjection.getOutput() + ">>>>>>" + input);
+                    return "success";
+                }
+            });
+            futures.add(future);
         }
+
+        for (Future future : futures) {
+            future.get();
+        }
+        executors.shutdown();
     }
 
     @Test

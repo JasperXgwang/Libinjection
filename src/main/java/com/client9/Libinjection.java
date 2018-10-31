@@ -46,16 +46,20 @@ public class Libinjection {
     public static final char CHAR_DOUBLE = '"';
     public static final char CHAR_TICK = '`';
 
-    private Keyword keywords = new Keyword(getKeywordsPath("Keywords.txt"));  /* keyword hashmap */
-    private State state;
-    private String output;
+    /**
+     * keyword hashmap
+     */
+    private final Keyword keywords = new Keyword(getKeywordsPath("Keywords.txt"));
+
+    private static final ThreadLocal<State> stateThreadLocal = new ThreadLocal<State>();
+    private static final ThreadLocal<String> outputThreadLocal = new ThreadLocal<String>();
 
     public State getState() {
-        return state;
+        return stateThreadLocal.get();
     }
 
     public String getOutput() {
-        return output;
+        return outputThreadLocal.get();
     }
 
     public String getKeywordsPath(String fileName) {
@@ -70,14 +74,16 @@ public class Libinjection {
      * Main API
      */
     public boolean libinjection_sqli(String input) {
-        this.state = new State(input, input.length(), 0);
+        stateThreadLocal.set(new State(input, input.length(), 0));
         boolean issqli = libinjection_is_sqli();
 
-        output = issqli + " : " + state.fingerprint;
+        String output = issqli + " : " + stateThreadLocal.get().fingerprint;
+        outputThreadLocal.set(output);
         return issqli;
     }
 
     public boolean libinjection_is_sqli() {
+        State state = stateThreadLocal.get();
         String s = state.s;
         int slen = state.slen;
         boolean sqlifingerprint;
@@ -135,6 +141,7 @@ public class Libinjection {
     }
 
     public boolean reparse_as_mysql() {
+        State state = stateThreadLocal.get();
         return (state.stats_comment_ddx + state.stats_comment_hash) > 0;
     }
 
@@ -151,7 +158,8 @@ public class Libinjection {
          * - single quote mode
          * - double quote mode
          */
-        state = new State(state.s, state.slen, flags);
+        stateThreadLocal.set(new State(stateThreadLocal.get().s, stateThreadLocal.get().slen, flags));
+        State state = stateThreadLocal.get();
 
         /* get fingerprint */
         fplen = libinjection_sqli_fold();
@@ -209,6 +217,8 @@ public class Libinjection {
     }
 
     public boolean libinjection_sqli_blacklist() {
+        State state = stateThreadLocal.get();
+
         int len = state.fingerprint.length();
 
         if (len > 0 && is_keyword(state.fingerprint)) {
@@ -226,6 +236,8 @@ public class Libinjection {
          * This next part just helps reduce false positives.
          *
          */
+        State state = stateThreadLocal.get();
+
         char ch;
         String fingerprint = state.fingerprint;
         int tlen = fingerprint.length();
@@ -417,6 +429,8 @@ public class Libinjection {
     }
 
     public int libinjection_sqli_fold() {
+        State state = stateThreadLocal.get();
+
         int pos = 0;  /* position where NEXT token goes */
         int left = 0; /* # of tokens so far that will be part of the final fingerprint */
         boolean more = true; /* more characters in input to check? */
@@ -922,6 +936,8 @@ public class Libinjection {
      * Tokenize, return whether there are more characters to tokenize
      */
     public boolean libinjection_sqli_tokenize() {
+        State state = stateThreadLocal.get();
+
         int pos = state.pos;
         int slen = state.slen;
         int current = state.current;
@@ -1734,10 +1750,14 @@ public class Libinjection {
      * makes sense of it and turns it into a token.
      */
     public int parse_white() {
+        State state = stateThreadLocal.get();
+
         return state.pos + 1;
     }
 
     public int parse_operator1() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int pos = state.pos;
         Token token = new Token(TYPE_OPERATOR, pos, 1, String.valueOf(s.charAt(pos)));
@@ -1746,6 +1766,8 @@ public class Libinjection {
     }
 
     public int parse_other() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int pos = state.pos;
         Token token = new Token(TYPE_UNKNOWN, pos, 1, String.valueOf(s.charAt(pos)));
@@ -1754,6 +1776,8 @@ public class Libinjection {
     }
 
     public int parse_char() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int pos = state.pos;
         Token token = new Token(s.charAt(pos), pos, 1, String.valueOf(s.charAt(pos)));
@@ -1762,6 +1786,8 @@ public class Libinjection {
     }
 
     public int parse_eol_comment() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int slen = state.slen;
         int pos = state.pos;
@@ -1788,6 +1814,8 @@ public class Libinjection {
      * In MYSQL mode, it's a EOL comment like '--'
      */
     public int parse_hash() {
+        State state = stateThreadLocal.get();
+
         state.stats_comment_hash += 1;
         if ((state.flags & FLAG_SQL_MYSQL) != 0) {
             state.stats_comment_hash += 1;
@@ -1800,6 +1828,8 @@ public class Libinjection {
     }
 
     public int parse_dash() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int slen = state.slen;
         int pos = state.pos;
@@ -1826,6 +1856,8 @@ public class Libinjection {
     }
 
     public int parse_slash() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int slen = state.slen;
         int pos = state.pos;
@@ -1868,6 +1900,8 @@ public class Libinjection {
     }
 
     public int parse_backslash() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int slen = state.slen;
         int pos = state.pos;
@@ -1887,6 +1921,8 @@ public class Libinjection {
     }
 
     public int parse_operator2() {
+        State state = stateThreadLocal.get();
+
         Character ch;
         String s = state.s;
         int slen = state.slen;
@@ -1937,6 +1973,8 @@ public class Libinjection {
      *
      */
     public int parse_string_core(char delim, int offset) {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int slen = state.slen;
         int pos = state.pos;
@@ -1972,6 +2010,8 @@ public class Libinjection {
 
     /* Used when first char is ' or " */
     public int parse_string() {
+        State state = stateThreadLocal.get();
+
         return parse_string_core(state.s.charAt(state.pos), 1);
     }
 
@@ -1979,6 +2019,8 @@ public class Libinjection {
      * Used when first char is E : psql "Escaped String"
      */
     public int parse_estring() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int slen = state.slen;
         int pos = state.pos;
@@ -1993,6 +2035,8 @@ public class Libinjection {
      * Used when first char is N or n: mysql "National Character set"
      */
     public int parse_ustring() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int slen = state.slen;
         int pos = state.pos;
@@ -2012,6 +2056,8 @@ public class Libinjection {
     }
 
     public int parse_qstring_core(int offset) {
+        State state = stateThreadLocal.get();
+
         char ch;
         String s = state.s;
         int slen = state.slen;
@@ -2082,6 +2128,8 @@ public class Libinjection {
      * mysql's N'STRING' or ... Oracle's nq string
      */
     public int parse_nqstring() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int slen = state.slen;
         int pos = state.pos;
@@ -2095,6 +2143,8 @@ public class Libinjection {
      * binary literal string re: [bB]'[01]*'
      */
     public int parse_bstring() {
+        State state = stateThreadLocal.get();
+
         int wlen;
         String s = state.s;
         int pos = state.pos;
@@ -2128,6 +2178,8 @@ public class Libinjection {
      * requirement of having EVEN number of chars, but pgsql does not
      */
     public int parse_xstring() {
+        State state = stateThreadLocal.get();
+
         int wlen;
         String s = state.s;
         int pos = state.pos;
@@ -2162,6 +2214,8 @@ public class Libinjection {
      * mean-around-column-name
      */
     public int parse_bword() {
+        State state = stateThreadLocal.get();
+
         String s = state.s;
         int pos = state.pos;
         int slen = state.slen;
@@ -2178,6 +2232,8 @@ public class Libinjection {
     }
 
     public int parse_word() {
+        State state = stateThreadLocal.get();
+
         Character wordtype;
         char delim;
         String s = state.s;
@@ -2226,6 +2282,8 @@ public class Libinjection {
     }
 
     public int parse_tick() {
+        State state = stateThreadLocal.get();
+
         int pos = parse_string_core(CHAR_TICK, 1);
 
         /*
@@ -2253,6 +2311,8 @@ public class Libinjection {
     }
 
     public int parse_var() {
+        State state = stateThreadLocal.get();
+
         int xlen;
         String s = state.s;
         int slen = state.slen;
@@ -2303,6 +2363,8 @@ public class Libinjection {
     }
 
     public int parse_money() {
+        State state = stateThreadLocal.get();
+
         int xlen;
         int strend;
         String s = state.s;
@@ -2391,6 +2453,8 @@ public class Libinjection {
     }
 
     public int parse_number() {
+        State state = stateThreadLocal.get();
+
         int xlen;
         int start;
         String digits = null;
@@ -2548,6 +2612,8 @@ public class Libinjection {
         wordtype = libinjection_sqli_lookup_word(merged);
 
         if (wordtype != null) {
+            State state = stateThreadLocal.get();
+
             Token token = new Token(wordtype, a.pos, merged.length(), merged);
             state.tokenvec[apos] = token;
             /* shift down all tokens after b by one index */
