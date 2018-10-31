@@ -8,13 +8,9 @@ public class Main {
 
     public static void main(String[] args) {
         /* test a string */
-        Libinjection a = new Libinjection();
+        Libinjection a = Libinjection.getInstance();
         boolean issqli = a.libinjection_sqli("admin' OR 1=1--");
-        System.out.println(issqli); 
-
-        /* test a file and output its results to another file, with options to urldecode and time (in milliseconds) */  
-        Test t = new Test();
-        t.testfile("data/sqli.txt", "data/resultsfile", true, false);
+        System.out.println(issqli);
     }
 }
 ```

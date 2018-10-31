@@ -26,7 +26,7 @@ public class TestFile {
         try {
             in = new Scanner(new FileReader(inputfile));
             out = new PrintWriter(outputfile, "UTF-8");
-            Libinjection libinjection = new Libinjection();
+            Libinjection libinjection = Libinjection.getInstance();
 
             while (in.hasNextLine()) {
                 String line = in.nextLine();

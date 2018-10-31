@@ -46,6 +46,14 @@ public class Libinjection {
     public static final char CHAR_DOUBLE = '"';
     public static final char CHAR_TICK = '`';
 
+
+    private Libinjection() {
+    }
+
+    private static class LibinjectionHolder {
+        private final static Libinjection libinjection = new Libinjection();
+    }
+
     /**
      * keyword hashmap
      */
@@ -53,6 +61,11 @@ public class Libinjection {
 
     private static final ThreadLocal<State> stateThreadLocal = new ThreadLocal<State>();
     private static final ThreadLocal<String> outputThreadLocal = new ThreadLocal<String>();
+
+
+    public static Libinjection getInstance() {
+        return LibinjectionHolder.libinjection;
+    }
 
     public State getState() {
         return stateThreadLocal.get();
@@ -80,6 +93,11 @@ public class Libinjection {
         String output = issqli + " : " + stateThreadLocal.get().fingerprint;
         outputThreadLocal.set(output);
         return issqli;
+    }
+
+    public void remove() {
+        outputThreadLocal.remove();
+        stateThreadLocal.remove();
     }
 
     public boolean libinjection_is_sqli() {

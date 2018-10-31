@@ -22,7 +22,7 @@ public class MainTest {
 
     @Before
     public void before() {
-        libinjection = new Libinjection();
+        libinjection = Libinjection.getInstance();
     }
 
     @Test
@@ -47,6 +47,8 @@ public class MainTest {
                 public Object call() throws Exception {
                     libinjection.libinjection_sqli(input);
                     logger.info(libinjection.getOutput() + ">>>>>>" + input);
+                    //释放threadlocal
+                    libinjection.remove();
                     return "success";
                 }
             });
@@ -100,6 +102,8 @@ public class MainTest {
         double total = (end - start) / 1000.0;
         double tps = iterations / total;
         logger.info("iterations:{} total time:{} sec  tps:{}", iterations, total, (int) tps);
+
+        libinjection.remove();
     }
 
     private String getFilePath(String fileName) {
